@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ data.client.name }} · 诊所报告{% endblock %}</title>
+  <style>
+    {% include theme_css %}
+  </style>
+</head>
+<body class="theme-{{ style }} view-{{ view }}">
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">{{ (data.client.clinic_name or '诊')[:1] }}</span>
+      <div class="brand-text">
+        <div class="brand-name">{{ data.client.clinic_name or '诊所服务' }}</div>
+        <div class="brand-sub">HTML 报表 · {{ {'summary': '摘要', 'full': '全报告', 'comparison': '分阶段对比'}[view] }}</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span>{{ data.generated_at }}</span>
+      <span>风格：{{ {'elegant': '典雅', 'cool': '酷炫', 'realistic': '写实'}[style] }}</span>
+    </div>
+  </header>
+
+  <div class="client-card">
+    <h1 class="client-name">{{ data.client.name }}</h1>
+    <div class="client-facts">
+      <span>编号 {{ data.client.client_id }}</span>
+      {% if data.client.gender %}<span>{{ data.client.gender }}</span>{% endif %}
+      {% if data.client.birth_date %}<span>出生 {{ data.client.birth_date }}</span>{% endif %}
+    </div>
+  </div>
+
+  <main class="content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    本报告由系统自动生成，仅供诊疗参考。原始影像与病历请以医疗机构存档为准。
+  </footer>
+</body>
+</html>
