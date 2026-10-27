@@ -1,0 +1,11 @@
+# Rename to backend.tf (and fill values) to store state remotely.
+# Bucket must already exist in the target region; DynamoDB table for locking.
+terraform {
+  backend "s3" {
+    bucket         = "clinic-agent-tfstate"
+    key            = "clinicsvc/terraform.tfstate"
+    region         = "cn-north-1"
+    dynamodb_table = "clinic-agent-tfstate-lock"
+    encrypt        = true
+  }
+}

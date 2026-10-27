@@ -1,0 +1,57 @@
+{% extends "base.html.j2" %}
+
+{% block content %}
+<section class="section">
+  <h2 class="section-title">分阶段对比</h2>
+  <p class="summary-lead">{{ data.comparison_conclusion }}</p>
+</section>
+
+<div class="stage-grid">
+  {% for g in stage_groups %}
+  <div class="stage-card">
+    <div class="stage-name">{{ g.stage.name }}</div>
+    <div class="stage-range">{{ g.stage.date_range }}</div>
+    <div class="stage-count">{{ g.record_count }} 条记录</div>
+    <p class="stage-narrative">{{ g.stage.narrative }}</p>
+  </div>
+  {% endfor %}
+</div>
+
+<section class="section">
+  <h2 class="section-title">指标对比</h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>指标</th>
+        {% for g in stage_groups %}<th>{{ g.stage.name }}</th>{% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in data.key_metrics %}
+      <tr>
+        <td>{{ m.label }}</td>
+        {% for g in stage_groups %}<td>{{ m.value }}{% if m.unit %} {{ m.unit }}{% endif %}</td>{% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% for g in stage_groups %}
+<section class="section">
+  <h2 class="section-title">{{ g.stage.name }} · 影像</h2>
+  <div class="gallery">
+    {% for r in g.records if r.record_type in ('photo', 'xray') %}
+    <figure class="gallery-item">
+      {% if r.asset_url %}
+      <img src="{{ r.asset_url }}" alt="{{ r.title }}">
+      {% else %}
+      <div class="placeholder type-{{ r.record_type }}">{{ record_type_labels[r.record_type] }}</div>
+      {% endif %}
+      <figcaption>{{ r.title }} · {{ r.recorded_at }}</figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>陈女士 · 诊所报告</title>
+  <style>
+:root {
+  --bg: #faf7f2;
+  --paper: #fffdf9;
+  --ink: #2b2925;
+  --muted: #7a7468;
+  --line: #e5dfd3;
+  --accent: #a8843c;
+  --serif: "Songti SC", "Noto Serif SC", "Source Han Serif SC", Georgia, serif;
+  --sans: "PingFang SC", "Noto Sans SC", "Source Han Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--serif);
+  line-height: 1.7;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 48px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.brand-name { font-size: 18px; letter-spacing: 1px; }
+.brand-sub { font-size: 12px; color: var(--muted); font-family: var(--sans); }
+.meta { display: flex; gap: 18px; color: var(--muted); font-size: 12px; font-family: var(--sans); }
+
+.client-card {
+  margin: 36px 48px 0;
+  padding: 34px 40px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+}
+
+.client-name { margin: 0 0 10px; font-size: 30px; font-weight: 500; }
+.client-facts { display: flex; gap: 22px; color: var(--muted); font-size: 14px; font-family: var(--sans); }
+
+.content { padding: 32px 48px 56px; max-width: 1080px; margin: 0 auto; }
+
+.section { margin-bottom: 34px; }
+.section-title {
+  font-size: 17px;
+  letter-spacing: 3px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+  margin: 0 0 18px;
+}
+
+.summary-lead { font-size: 16px; color: var(--ink); }
+
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.metric-card { background: var(--paper); border: 1px solid var(--line); padding: 20px 22px; }
+.metric-label { font-family: var(--sans); font-size: 13px; color: var(--muted); }
+.metric-value { font-size: 28px; margin: 6px 0 2px; }
+.metric-unit { font-size: 14px; color: var(--muted); margin-left: 4px; }
+.metric-trend { font-family: var(--sans); font-size: 12px; }
+.trend-up { color: #3f6f45; }
+.trend-down { color: #9c3b3b; }
+.trend-flat { color: var(--muted); }
+
+.record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.record-card { background: var(--paper); border: 1px solid var(--line); overflow: hidden; }
+.record-media, .placeholder { width: 100%; height: 150px; object-fit: cover; display: flex; align-items: center; justify-content: center; }
+.record-body { padding: 16px 18px; }
+.record-body h3 { margin: 8px 0 2px; font-size: 17px; font-weight: 600; }
+.record-body time { color: var(--muted); font-size: 12px; font-family: var(--sans); }
+.record-body p { margin: 8px 0 0; font-size: 14px; color: #4a463f; }
+
+.record-type-badge {
+  display: inline-block;
+  font-family: var(--sans);
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 2px 8px;
+  border: 1px solid currentColor;
+  color: var(--accent);
+}
+
+.placeholder { background: #f1ece1; color: #a49a84; font-family: var(--sans); font-size: 13px; letter-spacing: 2px; }
+.placeholder.type-photo { background: #edf1ea; color: #7f9277; }
+.placeholder.type-xray { background: #e9eef1; color: #7d939f; }
+
+.timeline { border-left: 1px solid var(--line); margin-left: 8px; padding-left: 22px; }
+.timeline-item { position: relative; margin-bottom: 18px; }
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.timeline-date { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+.timeline-body strong { font-size: 15px; }
+.timeline-body p { margin: 4px 0 0; font-size: 14px; color: #4a463f; }
+
+.stage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 34px; }
+.stage-card { background: var(--paper); border: 1px solid var(--line); border-top: 3px solid var(--accent); padding: 20px 22px; }
+.stage-name { font-size: 18px; }
+.stage-range, .stage-count { font-family: var(--sans); font-size: 12px; color: var(--muted); }
+.stage-narrative { font-size: 14px; color: #4a463f; }
+
+.compare-table { width: 100%; border-collapse: collapse; background: var(--paper); font-family: var(--sans); }
+.compare-table th, .compare-table td { border: 1px solid var(--line); padding: 10px 14px; text-align: left; font-size: 14px; }
+.compare-table th { background: #f5f0e6; color: var(--accent); font-weight: 600; }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+.gallery-item { margin: 0; }
+.gallery-item .placeholder, .gallery-item img { height: 160px; width: 100%; object-fit: cover; display: block; }
+.gallery-item figcaption { font-family: var(--sans); font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+.site-footer { text-align: center; padding: 22px; color: var(--muted); font-size: 12px; font-family: var(--sans); border-top: 1px solid var(--line); }  </style>
+</head>
+<body class="theme-elegant view-full">
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">北</span>
+      <div class="brand-text">
+        <div class="brand-name">北辰口腔诊所</div>
+        <div class="brand-sub">HTML 报表 · 全报告</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span>2026-10-27 12:30 UTC</span>
+      <span>风格：典雅</span>
+    </div>
+  </header>
+
+  <div class="client-card">
+    <h1 class="client-name">陈女士</h1>
+    <div class="client-facts">
+      <span>编号 CLI-2024-0193</span>
+<span>女</span><span>出生 1987-04-12</span>    </div>
+  </div>
+
+  <main class="content">
+<section class="section">
+  <h2 class="section-title">报告概述</h2>
+  <p class="summary-lead">陈女士于 2026 年 3 月因右上后牙反复疼痛就诊，影像提示 16 号牙近中深龋伴根尖周低密度影，诊断为不可复性牙髓炎。经根管治疗、桩核修复与全瓷冠修复后，咬合功能恢复良好，复诊未见根尖周新发病变，整体疗效稳定，建议每 6 个月定期复查。</p>
+</section>
+
+<section class="section">
+  <h2 class="section-title">关键指标</h2>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-label">疼痛评分</div>
+      <div class="metric-value">7<span class="metric-unit">→ 0</span></div>
+      <div class="metric-trend trend-down">↓ 下降</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">根尖周阴影</div>
+      <div class="metric-value">1.3<span class="metric-unit">mm</span></div>
+      <div class="metric-trend trend-down">↓ 下降</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">牙周袋深度</div>
+      <div class="metric-value">2.2<span class="metric-unit">mm</span></div>
+      <div class="metric-trend trend-flat">→ 平稳</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">咬合接触点</div>
+      <div class="metric-value">4<span class="metric-unit">点</span></div>
+      <div class="metric-trend trend-up">↑ 上升</div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <h2 class="section-title">X 光（3 条）</h2>
+  <div class="record-grid">
+    <article class="record-card">
+      <div class="placeholder type-xray">X 光</div>
+      <div class="record-body">
+        <span class="record-type-badge type-xray">X 光</span>
+        <h3>16 号牙根尖片（初诊）</h3>
+        <time>2026-03-02</time>
+        <p>近中深龋接近髓腔，根尖周见约 4.2 mm 低密度影。</p>
+      </div>
+    </article>
+    <article class="record-card">
+      <div class="placeholder type-xray">X 光</div>
+      <div class="record-body">
+        <span class="record-type-badge type-xray">X 光</span>
+        <h3>根充后 X 光</h3>
+        <time>2026-03-26</time>
+        <p>热牙胶根充恰填，根尖封闭良好。</p>
+      </div>
+    </article>
+    <article class="record-card">
+      <div class="placeholder type-xray">X 光</div>
+      <div class="record-body">
+        <span class="record-type-badge type-xray">X 光</span>
+        <h3>术后 6 个月根尖片</h3>
+        <time>2026-10-27</time>
+        <p>根尖周阴影缩小至约 1.3 mm，牙槽骨改建良好。</p>
+      </div>
+    </article>
+  </div>
+</section>
+<section class="section">
+  <h2 class="section-title">病历（2 条）</h2>
+  <div class="record-grid">
+    <article class="record-card">
+      <div class="placeholder type-medical_record">病历</div>
+      <div class="record-body">
+        <span class="record-type-badge type-medical_record">病历</span>
+        <h3>初诊病历</h3>
+        <time>2026-03-02</time>
+        <p>冷热刺激痛 2 周，夜间痛 3 天；16 号牙叩痛（+），诊断不可复性牙髓炎。</p>
+      </div>
+    </article>
+    <article class="record-card">
+      <div class="placeholder type-medical_record">病历</div>
+      <div class="record-body">
+        <span class="record-type-badge type-medical_record">病历</span>
+        <h3>根管治疗记录</h3>
+        <time>2026-03-12</time>
+        <p>完成根管清理、消毒，工作长度 19 mm，暂封。</p>
+      </div>
+    </article>
+  </div>
+</section>
+<section class="section">
+  <h2 class="section-title">照片（3 条）</h2>
+  <div class="record-grid">
+    <article class="record-card">
+      <div class="placeholder type-photo">照片</div>
+      <div class="record-body">
+        <span class="record-type-badge type-photo">照片</span>
+        <h3>术前口内照</h3>
+        <time>2026-03-05</time>
+        <p>16 号牙颌面深龋洞，颊侧牙龈轻度充血。</p>
+      </div>
+    </article>
+    <article class="record-card">
+      <div class="placeholder type-photo">照片</div>
+      <div class="record-body">
+        <span class="record-type-badge type-photo">照片</span>
+        <h3>桩核预备后照片</h3>
+        <time>2026-04-08</time>
+        <p>纤维桩粘接完成，牙体预备边缘清晰。</p>
+      </div>
+    </article>
+    <article class="record-card">
+      <div class="placeholder type-photo">照片</div>
+      <div class="record-body">
+        <span class="record-type-badge type-photo">照片</span>
+        <h3>全瓷冠戴入照</h3>
+        <time>2026-04-20</time>
+        <p>16 号牙全瓷冠就位，边缘密合，邻接关系良好。</p>
+      </div>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <h2 class="section-title">全量时间轴</h2>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="timeline-date">2026-03-02</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-xray">X 光</span>
+        <strong>16 号牙根尖片（初诊）</strong>
+        <p>近中深龋接近髓腔，根尖周见约 4.2 mm 低密度影。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-03-02</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-medical_record">病历</span>
+        <strong>初诊病历</strong>
+        <p>冷热刺激痛 2 周，夜间痛 3 天；16 号牙叩痛（+），诊断不可复性牙髓炎。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-03-05</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-photo">照片</span>
+        <strong>术前口内照</strong>
+        <p>16 号牙颌面深龋洞，颊侧牙龈轻度充血。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-03-12</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-medical_record">病历</span>
+        <strong>根管治疗记录</strong>
+        <p>完成根管清理、消毒，工作长度 19 mm，暂封。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-03-26</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-xray">X 光</span>
+        <strong>根充后 X 光</strong>
+        <p>热牙胶根充恰填，根尖封闭良好。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-04-08</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-photo">照片</span>
+        <strong>桩核预备后照片</strong>
+        <p>纤维桩粘接完成，牙体预备边缘清晰。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-04-20</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-photo">照片</span>
+        <strong>全瓷冠戴入照</strong>
+        <p>16 号牙全瓷冠就位，边缘密合，邻接关系良好。</p>
+      </div>
+    </div>
+    <div class="timeline-item">
+      <div class="timeline-date">2026-10-27</div>
+      <div class="timeline-body">
+        <span class="record-type-badge type-xray">X 光</span>
+        <strong>术后 6 个月根尖片</strong>
+        <p>根尖周阴影缩小至约 1.3 mm，牙槽骨改建良好。</p>
+      </div>
+    </div>
+  </div>
+</section>
+  </main>
+
+  <footer class="site-footer">
+    本报告由系统自动生成，仅供诊疗参考。原始影像与病历请以医疗机构存档为准。
+  </footer>
+</body>
+</html>

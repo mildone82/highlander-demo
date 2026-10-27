@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>陈女士 · 诊所报告</title>
+  <style>
+:root {
+  --bg: #080b18;
+  --panel: rgba(20, 26, 46, 0.62);
+  --ink: #e8edff;
+  --muted: #93a0c6;
+  --line: rgba(255, 255, 255, 0.08);
+  --cyan: #25e0ff;
+  --violet: #8f6cff;
+  --sans: "Inter", "PingFang SC", "Noto Sans SC", "Source Han Sans SC", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(900px 500px at 12% -10%, rgba(37, 224, 255, 0.16), transparent 60%),
+    radial-gradient(900px 520px at 90% 0%, rgba(143, 108, 255, 0.18), transparent 60%),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+  line-height: 1.65;
+}
+
+.site-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--line);
+  backdrop-filter: blur(10px);
+}
+
+.brand { display: flex; align-items: center; gap: 14px; }
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  color: #061021;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.brand-name { font-size: 18px; font-weight: 600; }
+.brand-sub { font-size: 12px; color: var(--muted); }
+.meta { display: flex; gap: 18px; color: var(--muted); font-size: 12px; }
+
+.client-card {
+  margin: 28px 40px 0;
+  padding: 30px 36px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--panel);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.client-name {
+  margin: 0 0 8px;
+  font-size: 30px;
+  font-weight: 700;
+  background: linear-gradient(90deg, #fff, #9cc6ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.client-facts { display: flex; gap: 22px; color: var(--muted); font-size: 14px; }
+
+.content { padding: 30px 40px 56px; max-width: 1120px; margin: 0 auto; }
+
+.section { margin-bottom: 32px; }
+.section-title {
+  font-size: 15px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin: 0 0 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
+
+.summary-lead { font-size: 16px; color: #d7deff; }
+
+.metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+.metric-card {
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+}
+.metric-label { font-size: 13px; color: var(--muted); }
+.metric-value { font-size: 28px; font-weight: 700; margin: 6px 0 2px; }
+.metric-unit { font-size: 14px; color: var(--muted); margin-left: 4px; font-weight: 400; }
+.metric-trend { font-size: 12px; }
+.trend-up { color: #39f2a1; }
+.trend-down { color: #ff6c8f; }
+.trend-flat { color: var(--muted); }
+
+.record-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 18px; }
+.record-card { border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel); backdrop-filter: blur(10px); }
+.record-media, .placeholder { width: 100%; height: 150px; object-fit: cover; display: flex; align-items: center; justify-content: center; }
+.record-body { padding: 16px 18px; }
+.record-body h3 { margin: 8px 0 2px; font-size: 17px; }
+.record-body time { color: var(--muted); font-size: 12px; }
+.record-body p { margin: 8px 0 0; font-size: 14px; color: #c3cdec; }
+
+.record-type-badge {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 1px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: var(--cyan);
+  border: 1px solid rgba(37, 224, 255, 0.5);
+  background: rgba(37, 224, 255, 0.08);
+}
+
+.placeholder {
+  background: linear-gradient(135deg, rgba(37, 224, 255, 0.08), rgba(143, 108, 255, 0.12));
+  color: #7fa7d6;
+  font-size: 13px;
+  letter-spacing: 2px;
+}
+
+.timeline { border-left: 1px solid var(--line); margin-left: 8px; padding-left: 22px; }
+.timeline-item { position: relative; margin-bottom: 18px; }
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 10px var(--cyan);
+}
+.timeline-date { font-size: 12px; color: var(--muted); }
+.timeline-body strong { font-size: 15px; }
+.timeline-body p { margin: 4px 0 0; font-size: 14px; color: #c3cdec; }
+
+.stage-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 32px; }
+.stage-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 20px 22px;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+}
+.stage-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--cyan), var(--violet));
+}
+.stage-name { font-size: 18px; font-weight: 700; }
+.stage-range, .stage-count { font-size: 12px; color: var(--muted); }
+.stage-narrative { font-size: 14px; color: #c3cdec; }
+
+.compare-table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; }
+.compare-table th, .compare-table td { padding: 10px 14px; text-align: left; font-size: 14px; border-bottom: 1px solid var(--line); }
+.compare-table th { color: var(--cyan); font-weight: 600; background: rgba(37, 224, 255, 0.06); }
+
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 18px; }
+.gallery-item { margin: 0; }
+.gallery-item .placeholder, .gallery-item img { height: 160px; width: 100%; object-fit: cover; display: block; border-radius: 12px; }
+.gallery-item figcaption { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+.site-footer { text-align: center; padding: 22px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }  </style>
+</head>
+<body class="theme-cool view-comparison">
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark">北</span>
+      <div class="brand-text">
+        <div class="brand-name">北辰口腔诊所</div>
+        <div class="brand-sub">HTML 报表 · 分阶段对比</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span>2026-10-27 12:30 UTC</span>
+      <span>风格：酷炫</span>
+    </div>
+  </header>
+
+  <div class="client-card">
+    <h1 class="client-name">陈女士</h1>
+    <div class="client-facts">
+      <span>编号 CLI-2024-0193</span>
+<span>女</span><span>出生 1987-04-12</span>    </div>
+  </div>
+
+  <main class="content">
+<section class="section">
+  <h2 class="section-title">分阶段对比</h2>
+  <p class="summary-lead">三个阶段对比显示：初诊阶段以急性症状为主，根尖周阴影范围约 4.2 mm；复诊阶段完成根管预备与根充，症状完全消退；术后阶段冠修复后咬合接触恢复，根尖周阴影较初诊缩小约 70%。整体呈持续改善趋势。</p>
+</section>
+
+<div class="stage-grid">
+  <div class="stage-card">
+    <div class="stage-name">初诊</div>
+    <div class="stage-range">2026-03-02 — 2026-03-05</div>
+    <div class="stage-count">3 条记录</div>
+    <p class="stage-narrative">主诉右上后牙冷热刺激痛与夜间自发痛，临床检查 16 号牙叩痛（+），X 光示近中深龋及根尖周低密度影。确定根管治疗方案并完成开髓、拔髓与首次根管预备。</p>
+  </div>
+  <div class="stage-card">
+    <div class="stage-name">复诊</div>
+    <div class="stage-range">2026-03-12 — 2026-04-08</div>
+    <div class="stage-count">3 条记录</div>
+    <p class="stage-narrative">完成根管清理、消毒与热牙胶根充，复查 X 光示根充恰填。症状消失，进入桩核预备与取模阶段。</p>
+  </div>
+  <div class="stage-card">
+    <div class="stage-name">术后</div>
+    <div class="stage-range">2026-04-20 — 2026-10-27</div>
+    <div class="stage-count">2 条记录</div>
+    <p class="stage-narrative">完成全瓷冠戴入与咬合调磨，复诊根尖周阴影显著缩小，无叩痛、无松动，功能恢复稳定。</p>
+  </div>
+</div>
+
+<section class="section">
+  <h2 class="section-title">指标对比</h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>指标</th>
+<th>初诊</th><th>复诊</th><th>术后</th>      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>疼痛评分</td>
+<td>7 → 0</td><td>7 → 0</td><td>7 → 0</td>      </tr>
+      <tr>
+        <td>根尖周阴影</td>
+<td>1.3 mm</td><td>1.3 mm</td><td>1.3 mm</td>      </tr>
+      <tr>
+        <td>牙周袋深度</td>
+<td>2.2 mm</td><td>2.2 mm</td><td>2.2 mm</td>      </tr>
+      <tr>
+        <td>咬合接触点</td>
+<td>4 点</td><td>4 点</td><td>4 点</td>      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section">
+  <h2 class="section-title">初诊 · 影像</h2>
+  <div class="gallery">
+    <figure class="gallery-item">
+      <div class="placeholder type-xray">X 光</div>
+      <figcaption>16 号牙根尖片（初诊） · 2026-03-02</figcaption>
+    </figure>
+    <figure class="gallery-item">
+      <div class="placeholder type-photo">照片</div>
+      <figcaption>术前口内照 · 2026-03-05</figcaption>
+    </figure>
+  </div>
+</section>
+<section class="section">
+  <h2 class="section-title">复诊 · 影像</h2>
+  <div class="gallery">
+    <figure class="gallery-item">
+      <div class="placeholder type-xray">X 光</div>
+      <figcaption>根充后 X 光 · 2026-03-26</figcaption>
+    </figure>
+    <figure class="gallery-item">
+      <div class="placeholder type-photo">照片</div>
+      <figcaption>桩核预备后照片 · 2026-04-08</figcaption>
+    </figure>
+  </div>
+</section>
+<section class="section">
+  <h2 class="section-title">术后 · 影像</h2>
+  <div class="gallery">
+    <figure class="gallery-item">
+      <div class="placeholder type-photo">照片</div>
+      <figcaption>全瓷冠戴入照 · 2026-04-20</figcaption>
+    </figure>
+    <figure class="gallery-item">
+      <div class="placeholder type-xray">X 光</div>
+      <figcaption>术后 6 个月根尖片 · 2026-10-27</figcaption>
+    </figure>
+  </div>
+</section>
+  </main>
+
+  <footer class="site-footer">
+    本报告由系统自动生成，仅供诊疗参考。原始影像与病历请以医疗机构存档为准。
+  </footer>
+</body>
+</html>
