@@ -1,0 +1,23 @@
+aws_region = "cn-north-1"
+environment = "dev"
+
+container_images = {
+  rag           = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/rag:latest"
+  memory        = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/memory:latest"
+  model_gateway = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/model-gateway:latest"
+}
+
+sagemaker_llm_image      = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/llm:latest"
+sagemaker_llm_model_data = "s3://bucket/qwen/model.tar.gz"
+sagemaker_embed_image    = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/embed:latest"
+sagemaker_embed_model_data = "s3://bucket/bge-m3/model.tar.gz"
+
+create_sagemaker_endpoints = true
+
+model_gateway_primary_base_url  = "http://sagemaker-llm-endpoint.example.internal/v1"
+model_gateway_fallback_base_url = "https://api.deepseek.com/v1"
+
+tags = {
+  Project = "knowledge-assistant"
+  Stage   = "dev"
+}

@@ -1,0 +1,10 @@
+# Runtime dependencies. Pinned to versions verified against this repository.
+# mem0ai==2.0.0 is the latest real release on PyPI (the design doc referenced
+# 2.2.1, which does not exist; see README "Version deviations").
+fastapi==0.128.8
+uvicorn==0.39.0
+pydantic==2.13.5
+mem0ai==2.0.0
+boto3==1.42.97
+openai==1.109.1
+langgraph==0.6.11
