@@ -1,0 +1,104 @@
+{
+  "client": {
+    "client_id": "CLI-2024-0193",
+    "name": "陈女士",
+    "gender": "女",
+    "birth_date": "1987-04-12",
+    "clinic_name": "北辰口腔诊所"
+  },
+  "generated_at": "2026-10-27 12:30 UTC",
+  "summary": "陈女士于 2026 年 3 月因右上后牙反复疼痛就诊，影像提示 16 号牙近中深龋伴根尖周低密度影，诊断为不可复性牙髓炎。经根管治疗、桩核修复与全瓷冠修复后，咬合功能恢复良好，复诊未见根尖周新发病变，整体疗效稳定，建议每 6 个月定期复查。",
+  "comparison_conclusion": "三个阶段对比显示：初诊阶段以急性症状为主，根尖周阴影范围约 4.2 mm；复诊阶段完成根管预备与根充，症状完全消退；术后阶段冠修复后咬合接触恢复，根尖周阴影较初诊缩小约 70%。整体呈持续改善趋势。",
+  "key_metrics": [
+    { "label": "疼痛评分", "value": "7", "trend": "down", "unit": "→ 0" },
+    { "label": "根尖周阴影", "value": "1.3", "trend": "down", "unit": "mm" },
+    { "label": "牙周袋深度", "value": "2.2", "trend": "flat", "unit": "mm" },
+    { "label": "咬合接触点", "value": "4", "trend": "up", "unit": "点" }
+  ],
+  "stages": [
+    {
+      "stage_id": "initial",
+      "name": "初诊",
+      "date_range": "2026-03-02 — 2026-03-05",
+      "narrative": "主诉右上后牙冷热刺激痛与夜间自发痛，临床检查 16 号牙叩痛（+），X 光示近中深龋及根尖周低密度影。确定根管治疗方案并完成开髓、拔髓与首次根管预备。"
+    },
+    {
+      "stage_id": "followup",
+      "name": "复诊",
+      "date_range": "2026-03-12 — 2026-04-08",
+      "narrative": "完成根管清理、消毒与热牙胶根充，复查 X 光示根充恰填。症状消失，进入桩核预备与取模阶段。"
+    },
+    {
+      "stage_id": "postop",
+      "name": "术后",
+      "date_range": "2026-04-20 — 2026-10-27",
+      "narrative": "完成全瓷冠戴入与咬合调磨，复诊根尖周阴影显著缩小，无叩痛、无松动，功能恢复稳定。"
+    }
+  ],
+  "records": [
+    {
+      "record_id": "REC-0001",
+      "recorded_at": "2026-03-02",
+      "record_type": "xray",
+      "title": "16 号牙根尖片（初诊）",
+      "summary": "近中深龋接近髓腔，根尖周见约 4.2 mm 低密度影。",
+      "stage": "initial"
+    },
+    {
+      "record_id": "REC-0002",
+      "recorded_at": "2026-03-02",
+      "record_type": "medical_record",
+      "title": "初诊病历",
+      "summary": "冷热刺激痛 2 周，夜间痛 3 天；16 号牙叩痛（+），诊断不可复性牙髓炎。",
+      "stage": "initial"
+    },
+    {
+      "record_id": "REC-0003",
+      "recorded_at": "2026-03-05",
+      "record_type": "photo",
+      "title": "术前口内照",
+      "summary": "16 号牙颌面深龋洞，颊侧牙龈轻度充血。",
+      "stage": "initial"
+    },
+    {
+      "record_id": "REC-0004",
+      "recorded_at": "2026-03-12",
+      "record_type": "medical_record",
+      "title": "根管治疗记录",
+      "summary": "完成根管清理、消毒，工作长度 19 mm，暂封。",
+      "stage": "followup"
+    },
+    {
+      "record_id": "REC-0005",
+      "recorded_at": "2026-03-26",
+      "record_type": "xray",
+      "title": "根充后 X 光",
+      "summary": "热牙胶根充恰填，根尖封闭良好。",
+      "stage": "followup"
+    },
+    {
+      "record_id": "REC-0006",
+      "recorded_at": "2026-04-08",
+      "record_type": "photo",
+      "title": "桩核预备后照片",
+      "summary": "纤维桩粘接完成，牙体预备边缘清晰。",
+      "stage": "followup"
+    },
+    {
+      "record_id": "REC-0007",
+      "recorded_at": "2026-04-20",
+      "record_type": "photo",
+      "title": "全瓷冠戴入照",
+      "summary": "16 号牙全瓷冠就位，边缘密合，邻接关系良好。",
+      "stage": "postop"
+    },
+    {
+      "record_id": "REC-0008",
+      "recorded_at": "2026-10-27",
+      "record_type": "xray",
+      "title": "术后 6 个月根尖片",
+      "summary": "根尖周阴影缩小至约 1.3 mm，牙槽骨改建良好。",
+      "stage": "postop"
+    }
+  ]
+}

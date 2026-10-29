@@ -1,0 +1,20 @@
+# Copy to dev.tfvars and adjust before `terraform apply`.
+aws_region      = "cn-north-1"
+name_prefix     = "clinicsvc"
+environment     = "dev"
+workspace_name  = "clinic-agent"
+
+tenants = {
+  demo = "Demo Clinic"
+}
+
+keycloak_hostname          = "auth.example-clinic.cn"
+api_domain_name            = "api.example-clinic.cn"
+
+# After ICP filing and DNS/ACM are ready, set these ARNs.
+alb_certificate_arn        = ""
+api_domain_certificate_arn = ""
+
+# Mirrored in-region ECR image for Keycloak / TEI+BGE-M3.
+keycloak_image       = "111122223333.dkr.ecr.cn-north-1.amazonaws.com.cn/keycloak:26.0"
+embedding_model_image = "111122223333.dkr.ecr.cn-north-1.amazonaws.com.cn/tei-bge-m3:latest"

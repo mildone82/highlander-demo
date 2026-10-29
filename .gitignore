@@ -1,31 +1,14 @@
+# Terraform local state and plugin cache
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
 .venv/
-venv/
-.env
-.env.*
-*.egg-info/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-build/
-dist/
-*.db
-*.sqlite3
 
-# Terraform
-.terraform/
-terraform.tfstate
-terraform.tfstate.*
-*.tfplan
-*.tfvars
-!examples/*.tfvars
-!dev.tfvars.example
-!backend.tf.example
-crash.log
-crash.*.log
-
-# Local demo artifacts
-.local-data/
-*.log
+# Local tooling
+*.zip
