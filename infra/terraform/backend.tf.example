@@ -1,0 +1,9 @@
+terraform {
+  backend "s3" {
+    bucket         = "highlander-tfstate-cn"
+    key            = "knowledge-assistant/dev/terraform.tfstate"
+    region         = "cn-north-1"
+    encrypt        = true
+    dynamodb_table = "terraform-locks"
+  }
+}

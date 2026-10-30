@@ -1,0 +1,4 @@
+{"id": "q1", "query": "S3 Vectors 在 AWS 中国区支持多大的索引？", "relevant": ["doc1-chunk-0", "doc1-chunk-1"]}
+{"id": "q2", "query": "知识助手用哪个模型生成回答？", "relevant": ["doc2-chunk-0"]}
+{"id": "q3", "query": "记忆按什么维度隔离？", "relevant": ["doc3-chunk-0", "doc3-chunk-2"]}
+{"id": "q4", "query": "如何通过命令行拉取工作仓库？", "relevant": ["doc4-chunk-1"]}
