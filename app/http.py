@@ -7,7 +7,6 @@ extra HTTP client dependency. Services themselves are served with FastAPI.
 from __future__ import annotations
 
 import json
-import time
 import urllib.error
 import urllib.request
 from typing import Any, Dict, Optional
@@ -46,19 +45,3 @@ class JsonHttpClient:
             raise RuntimeError(f"HTTP {exc.code} from {path}: {detail}") from exc
         except urllib.error.URLError as exc:
             raise RuntimeError(f"Connection error calling {path}: {exc.reason}") from exc
-
-
-def with_retry(fn, attempts: int = 3, base_delay: float = 0.2, max_delay: float = 2.0):
-    """Exponential backoff with full jitter, matching the design's retry policy."""
-    last_exc: Optional[Exception] = None
-    for attempt in range(attempts):
-        try:
-            return fn()
-        except Exception as exc:  # noqa: BLE001 - retry wrapper must catch all
-            last_exc = exc
-            if attempt == attempts - 1:
-                break
-            delay = min(max_delay, base_delay * (2**attempt))
-            time.sleep(delay * (0.5 + (hash(str(exc)) % 1000) / 1000.0))
-    assert last_exc is not None
-    raise last_exc

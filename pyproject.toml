@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "highlander-knowledge-assistant"
 version = "0.1.0"
 description = "Knowledge assistant for AWS China (AgentCore + mem0 + S3 Vectors + in-region inference)"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [tool.setuptools.packages.find]
 include = ["app*", "services*", "agent*", "ingestion*", "eval*"]

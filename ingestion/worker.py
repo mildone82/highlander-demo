@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import os
@@ -10,6 +11,7 @@ from typing import Optional
 from ingestion.chunker import chunk_text
 from ingestion.idempotency import DynamoDBIdempotencyStore, InMemoryIdempotencyStore
 from ingestion.indexer import Indexer
+from ingestion.parser import parse_document
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ class SQSWorker:
         bucket = record.get("s3", {}).get("bucket", {}).get("name", "")
         key = record.get("s3", {}).get("object", {}).get("key", "")
         body = s3.get_object(Bucket=bucket, Key=key)["Body"].read()
-        return body.decode("utf-8", errors="replace")
+        return parse_document(key, body)
 
 
 def build_local_indexer() -> Indexer:
@@ -74,3 +76,64 @@ def build_local_indexer() -> Indexer:
     from app.vector_store import InMemoryVectorStore
 
     return Indexer(LocalHashingEmbedder(), InMemoryVectorStore(), InMemoryIdempotencyStore())
+
+
+def build_indexer_from_env() -> Indexer:
+    """Production indexer assembled from the same env vars as the RAG service."""
+    from app.config import EmbedderSettings, VectorStoreSettings
+    from app.embedder import LocalHashingEmbedder, OpenAICompatibleEmbedder
+    from app.vector_store import InMemoryVectorStore, S3VectorsStore
+
+    if EmbedderSettings.provider == "openai":
+        embedder = OpenAICompatibleEmbedder(
+            base_url=EmbedderSettings.base_url,
+            api_key=EmbedderSettings.api_key,
+            model=EmbedderSettings.model,
+            dimensions=EmbedderSettings.dims,
+            timeout=EmbedderSettings.timeout_s,
+        )
+    else:
+        embedder = LocalHashingEmbedder(dims=EmbedderSettings.dims)
+
+    if VectorStoreSettings.provider == "s3_vectors":
+        store = S3VectorsStore(
+            bucket=VectorStoreSettings.bucket,
+            index=VectorStoreSettings.index,
+            dimension=VectorStoreSettings.dimension,
+            distance=VectorStoreSettings.distance,
+            region=VectorStoreSettings.region,
+            endpoint_url=VectorStoreSettings.endpoint_url or None,
+        )
+    else:
+        store = InMemoryVectorStore()
+
+    table = os.getenv("INGESTION_STATE_TABLE", "")
+    idempotency = (
+        DynamoDBIdempotencyStore(table, VectorStoreSettings.region)
+        if table
+        else InMemoryIdempotencyStore()
+    )
+    return Indexer(embedder, store, idempotency)
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+    parser = argparse.ArgumentParser(description="Drain the ingestion SQS queue")
+    parser.add_argument("--queue-url", default=os.getenv("INGESTION_QUEUE_URL", ""))
+    args = parser.parse_args()
+
+    queue_url = args.queue_url
+    if not queue_url:
+        raise SystemExit("INGESTION_QUEUE_URL or --queue-url is required")
+
+    worker = SQSWorker(
+        indexer=build_indexer_from_env(),
+        queue_url=queue_url,
+        region=os.getenv("VECTOR_REGION", "cn-north-1"),
+    )
+    worker.run()
+    return 0
+
+
+if __name__ == "__main__":
+    main()

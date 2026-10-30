@@ -2,3 +2,13 @@
 {"id": "q2", "query": "知识助手用哪个模型生成回答？", "relevant": ["doc2-chunk-0"]}
 {"id": "q3", "query": "记忆按什么维度隔离？", "relevant": ["doc3-chunk-0", "doc3-chunk-2"]}
 {"id": "q4", "query": "如何通过命令行拉取工作仓库？", "relevant": ["doc4-chunk-1"]}
+{"id": "q5", "query": "S3 Vectors 支持哪些距离度量？", "relevant": ["doc1-chunk-1"]}
+{"id": "q6", "query": "S3 Vectors 是否仅支持直连 API？", "relevant": ["doc1-chunk-0"]}
+{"id": "q7", "query": "嵌入模型是什么？", "relevant": ["doc2-chunk-0"]}
+{"id": "q8", "query": "记忆用什么身份维度隔离？", "relevant": ["doc3-chunk-0"]}
+{"id": "q9", "query": "谁负责写入知识库？", "relevant": ["doc3-chunk-1"]}
+{"id": "q10", "query": "多租户隔离怎么做？", "relevant": ["doc3-chunk-2"]}
+{"id": "q11", "query": "记忆写入如何异步化？", "relevant": ["doc5-chunk-0"]}
+{"id": "q12", "query": "memory_add 如何保证幂等？", "relevant": ["doc5-chunk-1"]}
+{"id": "q13", "query": "入库支持哪些文档格式？", "relevant": ["doc6-chunk-0"]}
+{"id": "q14", "query": "分块时如何切分句子？", "relevant": ["doc6-chunk-1"]}

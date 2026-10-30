@@ -1,0 +1,4 @@
+# Ingestion-worker extras on top of the shared runtime dependencies.
+-r requirements.txt
+pypdf==6.21.4
+python-docx==1.2.0

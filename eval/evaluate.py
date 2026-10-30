@@ -1,8 +1,9 @@
-"""Recall@k evaluation over a small offline dataset.
+"""Offline retrieval evaluation (recall@k and precision@k).
 
 Runs with the deterministic hashing embedder + in-memory store, so it works
 without AWS, a GPU, or a network. The production path swaps in the OpenAI-
-compatible embedder and the S3 Vectors store via the same interfaces.
+compatible embedder and the S3 Vectors store via the same interfaces using the
+``EMBEDDER_PROVIDER`` / ``VECTOR_STORE_PROVIDER`` environment variables.
 """
 
 from __future__ import annotations
@@ -11,7 +12,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Dict, List
+from typing import Any, Dict, List
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -30,6 +31,10 @@ def load_documents() -> List[dict]:
         {"id": "doc3-chunk-2", "text": "多租户时以 namespace/collection 前缀和 IAM 做租户级隔离。", "source": "doc3"},
         {"id": "doc4-chunk-0", "text": "Multica 平台提供命令行工具与工作区。", "source": "doc4"},
         {"id": "doc4-chunk-1", "text": "使用 multica repo checkout 命令可以拉取工作仓库。", "source": "doc4"},
+        {"id": "doc5-chunk-0", "text": "记忆写入通过 SQS 异步解耦，worker 消费后写入 mem0。", "source": "doc5"},
+        {"id": "doc5-chunk-1", "text": "memory_add 以 request_id 为键在 DynamoDB 上做幂等去重。", "source": "doc5"},
+        {"id": "doc6-chunk-0", "text": "入库 worker 支持 PDF 与 DOCX 文档解析后再分块。", "source": "doc6"},
+        {"id": "doc6-chunk-1", "text": "分块器优先按段落与句子边界切分，并保留重叠。", "source": "doc6"},
     ]
 
 
@@ -42,30 +47,64 @@ def load_dataset(path: str) -> List[dict]:
     return items
 
 
-def evaluate(dataset_path: str, top_k: int = 4) -> Dict[str, float]:
-    embedder = LocalHashingEmbedder(dims=64)
-    store = InMemoryVectorStore()
-    docs = load_documents()
-    store.put(
-        ids=[d["id"] for d in docs],
-        vectors=embedder.embed([d["text"] for d in docs]),
-        payloads=[{"text": d["text"], "source": d["source"]} for d in docs],
-    )
+def build_service(top_k: int = 4) -> RetrieveService:
+    if os.getenv("VECTOR_STORE_PROVIDER") == "s3_vectors":
+        from app.config import EmbedderSettings, VectorStoreSettings
+        from app.embedder import OpenAICompatibleEmbedder
+        from app.vector_store import S3VectorsStore
+
+        embedder = OpenAICompatibleEmbedder(
+            base_url=EmbedderSettings.base_url,
+            api_key=EmbedderSettings.api_key,
+            model=EmbedderSettings.model,
+            dimensions=EmbedderSettings.dims,
+            timeout=EmbedderSettings.timeout_s,
+        )
+        store = S3VectorsStore(
+            bucket=VectorStoreSettings.bucket,
+            index=VectorStoreSettings.index,
+            dimension=VectorStoreSettings.dimension,
+            distance=VectorStoreSettings.distance,
+            region=VectorStoreSettings.region,
+            endpoint_url=VectorStoreSettings.endpoint_url or None,
+        )
+    else:
+        embedder = LocalHashingEmbedder(dims=int(os.getenv("EVAL_EMBEDDER_DIMS", "64")))
+        store = InMemoryVectorStore()
+        docs = load_documents()
+        store.put(
+            ids=[d["id"] for d in docs],
+            vectors=embedder.embed([d["text"] for d in docs]),
+            payloads=[{"text": d["text"], "source": d["source"]} for d in docs],
+        )
     service = RetrieveService(embedder, store)
+    return service
+
+
+def evaluate(dataset_path: str, top_k: int = 4) -> Dict[str, Any]:
+    service = build_service(top_k)
 
     per_query_recall = []
+    per_query_precision = []
     for item in load_dataset(dataset_path):
         response = service.retrieve(item["query"], top_k=top_k)
         retrieved = {c.id for c in response.chunks}
         relevant = set(item["relevant"])
         hits = len(retrieved & relevant)
         recall = hits / len(relevant) if relevant else 0.0
+        precision = hits / top_k
         per_query_recall.append(recall)
-        print(f"{item['id']}: recall@{top_k}={recall:.2f}")
+        per_query_precision.append(precision)
+        print(f"{item['id']}: recall@{top_k}={recall:.2f} precision@{top_k}={precision:.2f}")
 
     mean_recall = sum(per_query_recall) / len(per_query_recall) if per_query_recall else 0.0
-    print(f"mean recall@{top_k} = {mean_recall:.3f}")
-    return {"mean_recall": mean_recall, "n": len(per_query_recall)}
+    mean_precision = sum(per_query_precision) / len(per_query_precision) if per_query_precision else 0.0
+    print(f"mean recall@{top_k} = {mean_recall:.3f}; mean precision@{top_k} = {mean_precision:.3f}")
+    return {
+        "mean_recall": mean_recall,
+        "mean_precision": mean_precision,
+        "n": len(per_query_recall),
+    }
 
 
 def main() -> int:

@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from ingestion.chunker import chunk_text
 from ingestion.indexer import Indexer
+from ingestion.parser import parse_document
 
 
 def main() -> int:
@@ -35,8 +36,8 @@ def main() -> int:
     indexer = Indexer(LocalHashingEmbedder(), InMemoryVectorStore(), InMemoryIdempotencyStore())
     total = 0
     for path in paths:
-        with open(path, "r", encoding="utf-8", errors="replace") as handle:
-            text = handle.read()
+        with open(path, "rb") as handle:
+            text = parse_document(os.path.basename(path), handle.read())
         chunks = chunk_text(text, source=os.path.basename(path), max_chars=args.max_chars)
         total += indexer.index_chunks(chunks)
     print(f"Indexed {total} chunks")
