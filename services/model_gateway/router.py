@@ -37,10 +37,11 @@ def _providers_from_env() -> List[Provider]:
     primary = Provider(
         name="in-region",
         base_url=os.getenv("MG_PRIMARY_BASE_URL", ""),
-        api_key=os.getenv("MG_PRIMARY_API_KEY", "local-dev-key"),
+        api_key=os.getenv("MG_PRIMARY_API_KEY", ""),
         llm_model=os.getenv("MG_PRIMARY_LLM_MODEL", "qwen2.5-7b-instruct"),
         embed_model=os.getenv("MG_PRIMARY_EMBED_MODEL", "bge-m3"),
     )
+    _require_key_if_configured("in-region", primary.base_url, primary.api_key)
     if primary.base_url:
         providers.append(primary)
     fallback = Provider(
@@ -50,9 +51,19 @@ def _providers_from_env() -> List[Provider]:
         llm_model=os.getenv("MG_FALLBACK_LLM_MODEL", "deepseek-chat"),
         embed_model=os.getenv("MG_FALLBACK_EMBED_MODEL", ""),
     )
+    _require_key_if_configured("domestic-api", fallback.base_url, fallback.api_key)
     if fallback.base_url:
         providers.append(fallback)
     return providers
+
+
+def _require_key_if_configured(name: str, base_url: str, api_key: str) -> None:
+    """Fail closed instead of silently using a placeholder credential."""
+    if base_url and not api_key:
+        raise RuntimeError(
+            f"{name} base URL is configured but its API key is empty; "
+            "set MG_PRIMARY_API_KEY / MG_FALLBACK_API_KEY from Secrets Manager"
+        )
 
 
 class ModelRouter:

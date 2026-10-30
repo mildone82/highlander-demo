@@ -33,10 +33,10 @@ resource "aws_s3_bucket_public_access_block" "documents" {
 }
 
 resource "aws_sqs_queue" "ingestion" {
-  name                      = "${local.name_prefix}-ingestion"
-  message_retention_seconds = 1209600
+  name                       = "${local.name_prefix}-ingestion"
+  message_retention_seconds  = 1209600
   visibility_timeout_seconds = 120
-  tags                      = merge(var.tags, { Name = "${local.name_prefix}-ingestion" })
+  tags                       = merge(var.tags, { Name = "${local.name_prefix}-ingestion" })
 }
 
 resource "aws_sqs_queue" "ingestion_dlq" {
@@ -121,12 +121,33 @@ resource "aws_dynamodb_table" "session" {
   tags = merge(var.tags, { Name = "${local.name_prefix}-session" })
 }
 
-resource "aws_secretsmanager_secret" "model_api_key" {
-  name = "${local.name_prefix}-model-api-key"
-  tags = merge(var.tags, { Name = "${local.name_prefix}-model-api-key" })
+resource "aws_dynamodb_table" "memory_write_state" {
+  name         = "${local.name_prefix}-memory-write-state"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "request_id"
+  attribute {
+    name = "request_id"
+    type = "S"
+  }
+  tags = merge(var.tags, { Name = "${local.name_prefix}-memory-write-state" })
 }
 
-resource "aws_secretsmanager_secret_version" "model_api_key" {
-  secret_id     = aws_secretsmanager_secret.model_api_key.id
-  secret_string = jsonencode({ in_region = "", domestic_api = "" })
+resource "aws_secretsmanager_secret" "model_api_key_primary" {
+  name = "${local.name_prefix}-model-api-key-primary"
+  tags = merge(var.tags, { Name = "${local.name_prefix}-model-api-key-primary" })
+}
+
+resource "aws_secretsmanager_secret_version" "model_api_key_primary" {
+  secret_id     = aws_secretsmanager_secret.model_api_key_primary.id
+  secret_string = var.model_api_key_primary
+}
+
+resource "aws_secretsmanager_secret" "model_api_key_fallback" {
+  name = "${local.name_prefix}-model-api-key-fallback"
+  tags = merge(var.tags, { Name = "${local.name_prefix}-model-api-key-fallback" })
+}
+
+resource "aws_secretsmanager_secret_version" "model_api_key_fallback" {
+  secret_id     = aws_secretsmanager_secret.model_api_key_fallback.id
+  secret_string = var.model_api_key_fallback
 }

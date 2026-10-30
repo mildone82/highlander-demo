@@ -18,9 +18,11 @@ os.environ.setdefault("MEM0_TELEMETRY", "False")
 def build_mem0_config() -> Dict[str, Any]:
     """Assemble the mem0 config the design doc specifies.
 
-    mem0 2.0.0 ships a SQLite-only history DB (see README "Version deviations"),
-    so ``history_db_path`` is used for the MVP and PostgreSQL is documented as a
-    future upgrade once a PostgreSQL history backend is available.
+    mem0 2.2.1 ships a SQLite-only history DB in the OSS package (the only
+    history storage exposed in ``mem0/configs/base.py`` is ``history_db_path``;
+    see README "Version deviations"), so ``history_db_path`` is used for the MVP
+    and PostgreSQL is documented as a future upgrade once a PostgreSQL history
+    backend is available.
     """
     return {
         "vector_store": {
@@ -100,7 +102,10 @@ class Mem0Provider(MemoryProvider):
         ]
 
     def update(self, memory_id: str, memory: str, metadata: Optional[Dict[str, Any]]) -> None:
-        self._memory.update(memory_id, memory, metadata=metadata)
+        # mem0 2.2.1 renamed the second positional arg from ``data`` to ``text``.
+        # Pass it by keyword so the privacy/correction contract stays valid across
+        # versions that accept ``metadata`` (both 2.0.0 and 2.2.1 do).
+        self._memory.update(memory_id, text=memory, metadata=metadata)
 
     def delete(self, memory_id: str) -> None:
         self._memory.delete(memory_id)

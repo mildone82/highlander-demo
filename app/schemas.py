@@ -52,10 +52,13 @@ class MemoryAddRequest(BaseModel):
     user_id: str = "default"
     messages: List[ChatMessage]
     metadata: Dict[str, Any] = Field(default_factory=dict)
+    request_id: Optional[str] = None
 
 
 class MemoryAddResponse(BaseModel):
     memory_ids: List[str] = Field(default_factory=list)
+    request_id: Optional[str] = None
+    queued: bool = False
 
 
 class MemoryUpdateRequest(BaseModel):

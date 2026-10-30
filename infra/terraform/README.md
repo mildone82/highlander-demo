@@ -21,3 +21,9 @@ terraform apply -var-file=dev.tfvars
 - S3 Vectors 目前 Terraform AWS provider 尚无原生资源，向量桶与索引由
   一次性脚本 `scripts/provision_s3_vectors.py` 创建（见 README 部署步骤）。
 - 首次 `apply` 前建议先创建远端 state 桶与 DynamoDB 锁表。
+- 内部 ALB 的客户端入口走 HTTPS:443（`alb_certificate_arn` 指向 `cn-north-1`
+  的 ACM 证书）；VPC 内服务间调用走 HTTP:80 私有监听器。`model_api_key_primary/
+  fallback` 为空时 Terraform 会直接报错（fail closed），避免以占位密钥部署。
+- `compute` 模块除 `rag/memory/model_gateway` 外，还部署 LangGraph 回退
+  `agent` 服务（`/ask`）、`memory_worker`（消费 memory SQS，异步写记忆）与
+  `ingestion_worker`（消费 ingestion SQS，解析/分块/向量化入库）。

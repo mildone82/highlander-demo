@@ -6,7 +6,7 @@ for the LangGraph fallback, keeping the two backends behaviorally identical.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from app.http import JsonHttpClient
 
@@ -90,8 +90,16 @@ class HttpToolClients:
             for m in response.get("memories", [])
         ]
 
-    def memory_add(self, user_id: str, messages: List[Dict[str, Any]]) -> None:
-        self.memory.post("/memory/add", {"user_id": user_id, "messages": messages})
+    def memory_add(
+        self,
+        user_id: str,
+        messages: List[Dict[str, Any]],
+        request_id: Optional[str] = None,
+    ) -> None:
+        payload = {"user_id": user_id, "messages": messages}
+        if request_id:
+            payload["request_id"] = request_id
+        self.memory.post("/memory/add", payload)
 
 
 class ToolRegistry:

@@ -2,9 +2,12 @@ aws_region = "cn-north-1"
 environment = "dev"
 
 container_images = {
-  rag           = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/rag:latest"
-  memory        = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/memory:latest"
-  model_gateway = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/model-gateway:latest"
+  rag              = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/rag:latest"
+  memory           = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/memory:latest"
+  model_gateway    = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/model-gateway:latest"
+  agent            = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/agent:latest"
+  memory_worker    = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/memory-worker:latest"
+  ingestion_worker = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/ingestion-worker:latest"
 }
 
 sagemaker_llm_image      = "123456789012.dkr.ecr.cn-north-1.amazonaws.com.cn/llm:latest"
@@ -16,6 +19,14 @@ create_sagemaker_endpoints = true
 
 model_gateway_primary_base_url  = "http://sagemaker-llm-endpoint.example.internal/v1"
 model_gateway_fallback_base_url = "https://api.deepseek.com/v1"
+
+# Stored in Secrets Manager and injected into the model_gateway task definition.
+# Replace with real values; empty values fail closed at terraform plan time.
+model_api_key_primary   = "replace-with-in-region-api-key"
+model_api_key_fallback  = "replace-with-domestic-api-key"
+
+# ACM certificate in cn-north-1 covering the ALB's DNS name.
+alb_certificate_arn = "arn:aws-cn:acm:cn-north-1:123456789012:certificate/00000000-0000-0000-0000-000000000000"
 
 tags = {
   Project = "knowledge-assistant"

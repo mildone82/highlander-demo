@@ -38,7 +38,7 @@ resource "aws_iam_role_policy" "execution_secrets" {
     Statement = [{
       Effect   = "Allow"
       Action   = ["secretsmanager:GetSecretValue"]
-      Resource = ["*"]
+      Resource = [var.model_api_key_primary_arn, var.model_api_key_fallback_arn]
     }]
   })
 }
@@ -56,13 +56,14 @@ resource "aws_iam_role" "task" {
   tags = var.tags
 }
 
-# TODO: tighten Resource ARNs once the S3 Vectors ARN format is confirmed in aws-cn.
 resource "aws_iam_role_policy" "task_data_access" {
   name = "${local.name_prefix}-task-data-access"
   role = aws_iam_role.task.id
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      # The S3 Vectors service does not yet document a resource-level ARN format
+      # for aws-cn, so this one statement stays service-wide until confirmed.
       {
         Effect   = "Allow"
         Action   = ["s3vectors:*"]
@@ -76,21 +77,23 @@ resource "aws_iam_role_policy" "task_data_access" {
           "dynamodb:UpdateItem",
           "dynamodb:DeleteItem"
         ]
-        Resource = ["*"]
+        Resource = [var.ingestion_state_table_arn, var.memory_write_state_table_arn]
       },
       {
         Effect = "Allow"
         Action = [
           "sqs:SendMessage",
           "sqs:ReceiveMessage",
-          "sqs:DeleteMessage"
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+          "sqs:ChangeMessageVisibility"
         ]
-        Resource = ["*"]
+        Resource = [var.ingestion_queue_arn, var.memory_queue_arn]
       },
       {
         Effect   = "Allow"
         Action   = ["s3:GetObject"]
-        Resource = ["*"]
+        Resource = ["${var.document_bucket_arn}/*"]
       }
     ]
   })
@@ -114,6 +117,24 @@ resource "aws_cloudwatch_log_group" "model_gateway" {
   tags              = var.tags
 }
 
+resource "aws_cloudwatch_log_group" "agent" {
+  name              = "/ecs/${local.name_prefix}/agent"
+  retention_in_days = 14
+  tags              = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "memory_worker" {
+  name              = "/ecs/${local.name_prefix}/memory-worker"
+  retention_in_days = 14
+  tags              = var.tags
+}
+
+resource "aws_cloudwatch_log_group" "ingestion_worker" {
+  name              = "/ecs/${local.name_prefix}/ingestion-worker"
+  retention_in_days = 14
+  tags              = var.tags
+}
+
 resource "aws_lb" "this" {
   name               = "${local.name_prefix}-alb"
   internal           = true
@@ -121,6 +142,22 @@ resource "aws_lb" "this" {
   security_groups    = [var.alb_security_group_id]
   subnets            = var.private_subnet_ids
   tags               = var.tags
+}
+
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.this.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = var.alb_certificate_arn
+  default_action {
+    type = "fixed-response"
+    fixed_response {
+      content_type = "text/plain"
+      message_body = "not found"
+      status_code  = "404"
+    }
+  }
 }
 
 resource "aws_lb_listener" "http" {
@@ -188,8 +225,25 @@ resource "aws_lb_target_group" "model_gateway" {
   tags = var.tags
 }
 
+resource "aws_lb_target_group" "agent" {
+  name        = "${local.name_prefix}-agent"
+  port        = 8003
+  protocol    = "HTTP"
+  vpc_id      = var.vpc_id
+  target_type = "ip"
+  health_check {
+    path                = "/healthz"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    matcher             = "200"
+  }
+  tags = var.tags
+}
+
 resource "aws_lb_listener_rule" "rag" {
-  listener_arn = aws_lb_listener.http.arn
+  listener_arn = aws_lb_listener.https.arn
   priority     = 10
   action {
     type             = "forward"
@@ -203,7 +257,7 @@ resource "aws_lb_listener_rule" "rag" {
 }
 
 resource "aws_lb_listener_rule" "memory" {
-  listener_arn = aws_lb_listener.http.arn
+  listener_arn = aws_lb_listener.https.arn
   priority     = 20
   action {
     type             = "forward"
@@ -217,6 +271,64 @@ resource "aws_lb_listener_rule" "memory" {
 }
 
 resource "aws_lb_listener_rule" "model_gateway" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 30
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.model_gateway.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/v1", "/v1/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "agent" {
+  listener_arn = aws_lb_listener.https.arn
+  priority     = 40
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.agent.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/ask", "/ask/*"]
+    }
+  }
+}
+
+# Intra-VPC service-to-service traffic uses the private HTTP listener; client
+# ingress is TLS-terminated on the HTTPS listener above.
+resource "aws_lb_listener_rule" "http_rag" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 10
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.rag.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/retrieve", "/retrieve/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "http_memory" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 20
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.memory.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/memory", "/memory/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "http_model_gateway" {
   listener_arn = aws_lb_listener.http.arn
   priority     = 30
   action {
@@ -225,7 +337,21 @@ resource "aws_lb_listener_rule" "model_gateway" {
   }
   condition {
     path_pattern {
-      values = ["/v1", "/v1/*", "/healthz"]
+      values = ["/v1", "/v1/*"]
+    }
+  }
+}
+
+resource "aws_lb_listener_rule" "http_agent" {
+  listener_arn = aws_lb_listener.http.arn
+  priority     = 40
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.agent.arn
+  }
+  condition {
+    path_pattern {
+      values = ["/ask", "/ask/*"]
     }
   }
 }
@@ -239,8 +365,8 @@ resource "aws_ecs_task_definition" "rag" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
   container_definitions = jsonencode([{
-    name  = "rag"
-    image = var.container_images.rag
+    name         = "rag"
+    image        = var.container_images.rag
     portMappings = [{ containerPort = 8001, protocol = "tcp" }]
     environment = [
       { name = "EMBEDDER_PROVIDER", value = "openai" },
@@ -274,8 +400,8 @@ resource "aws_ecs_task_definition" "memory" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
   container_definitions = jsonencode([{
-    name  = "memory"
-    image = var.container_images.memory
+    name         = "memory"
+    image        = var.container_images.memory
     portMappings = [{ containerPort = 8000, protocol = "tcp" }]
     environment = [
       { name = "MEMORY_PROVIDER", value = "mem0" },
@@ -287,7 +413,8 @@ resource "aws_ecs_task_definition" "memory" {
       { name = "MEMORY_VECTOR_INDEX", value = "memory" },
       { name = "MEMORY_VECTOR_DIMENSION", value = "1024" },
       { name = "MEMORY_VECTOR_REGION", value = "cn-north-1" },
-      { name = "MEMORY_HISTORY_DB", value = "/tmp/history.db" }
+      { name = "MEMORY_HISTORY_DB", value = "/tmp/history.db" },
+      { name = "MEMORY_WRITE_QUEUE_URL", value = var.memory_queue_url }
     ]
     logConfiguration = {
       logDriver = "awslogs"
@@ -310,8 +437,8 @@ resource "aws_ecs_task_definition" "model_gateway" {
   execution_role_arn       = aws_iam_role.execution.arn
   task_role_arn            = aws_iam_role.task.arn
   container_definitions = jsonencode([{
-    name  = "model-gateway"
-    image = var.container_images.model_gateway
+    name         = "model-gateway"
+    image        = var.container_images.model_gateway
     portMappings = [{ containerPort = 8002, protocol = "tcp" }]
     environment = [
       { name = "MG_PRIMARY_BASE_URL", value = var.model_gateway_primary_base_url },
@@ -319,12 +446,119 @@ resource "aws_ecs_task_definition" "model_gateway" {
       { name = "MG_PRIMARY_LLM_MODEL", value = "qwen2.5-7b-instruct" },
       { name = "MG_PRIMARY_EMBED_MODEL", value = "bge-m3" }
     ]
+    secrets = [
+      { name = "MG_PRIMARY_API_KEY", valueFrom = var.model_api_key_primary_arn },
+      { name = "MG_FALLBACK_API_KEY", valueFrom = var.model_api_key_fallback_arn }
+    ]
     logConfiguration = {
       logDriver = "awslogs"
       options = {
         "awslogs-group"         = aws_cloudwatch_log_group.model_gateway.name
         "awslogs-region"        = "cn-north-1"
         "awslogs-stream-prefix" = "model-gateway"
+      }
+    }
+  }])
+  tags = var.tags
+}
+
+resource "aws_ecs_task_definition" "agent" {
+  family                   = "${local.name_prefix}-agent"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+  container_definitions = jsonencode([{
+    name         = "agent"
+    image        = var.container_images.agent
+    portMappings = [{ containerPort = 8003, protocol = "tcp" }]
+    environment = [
+      { name = "RAG_SERVICE_URL", value = "http://${local.alb_dns}" },
+      { name = "MEMORY_SERVICE_URL", value = "http://${local.alb_dns}" },
+      { name = "LLM_BASE_URL", value = "http://${local.alb_dns}/v1" },
+      { name = "LLM_MODEL", value = "qwen2.5-7b-instruct" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.agent.name
+        "awslogs-region"        = "cn-north-1"
+        "awslogs-stream-prefix" = "agent"
+      }
+    }
+  }])
+  tags = var.tags
+}
+
+resource "aws_ecs_task_definition" "memory_worker" {
+  family                   = "${local.name_prefix}-memory-worker"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+  container_definitions = jsonencode([{
+    name  = "memory-worker"
+    image = var.container_images.memory_worker
+    environment = [
+      { name = "MEMORY_PROVIDER", value = "mem0" },
+      { name = "MEMORY_LLM_BASE_URL", value = "http://${local.alb_dns}/v1" },
+      { name = "MEMORY_EMBEDDER_BASE_URL", value = "http://${local.alb_dns}/v1" },
+      { name = "MEMORY_LLM_MODEL", value = "qwen2.5-7b-instruct" },
+      { name = "MEMORY_EMBEDDER_MODEL", value = "bge-m3" },
+      { name = "MEMORY_VECTOR_BUCKET", value = "knowledge-assistant-vectors" },
+      { name = "MEMORY_VECTOR_INDEX", value = "memory" },
+      { name = "MEMORY_VECTOR_DIMENSION", value = "1024" },
+      { name = "MEMORY_VECTOR_REGION", value = "cn-north-1" },
+      { name = "MEMORY_HISTORY_DB", value = "/tmp/history.db" },
+      { name = "MEMORY_WRITE_QUEUE_URL", value = var.memory_queue_url },
+      { name = "MEMORY_IDEMPOTENCY_TABLE", value = var.memory_write_state_table_name }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.memory_worker.name
+        "awslogs-region"        = "cn-north-1"
+        "awslogs-stream-prefix" = "memory-worker"
+      }
+    }
+  }])
+  tags = var.tags
+}
+
+resource "aws_ecs_task_definition" "ingestion_worker" {
+  family                   = "${local.name_prefix}-ingestion-worker"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = "512"
+  memory                   = "1024"
+  execution_role_arn       = aws_iam_role.execution.arn
+  task_role_arn            = aws_iam_role.task.arn
+  container_definitions = jsonencode([{
+    name  = "ingestion-worker"
+    image = var.container_images.ingestion_worker
+    environment = [
+      { name = "INGESTION_QUEUE_URL", value = var.ingestion_queue_url },
+      { name = "INGESTION_STATE_TABLE", value = var.ingestion_state_table_name },
+      { name = "EMBEDDER_PROVIDER", value = "openai" },
+      { name = "EMBEDDER_BASE_URL", value = "http://${local.alb_dns}/v1" },
+      { name = "EMBEDDER_MODEL", value = "bge-m3" },
+      { name = "EMBEDDER_DIMS", value = "1024" },
+      { name = "VECTOR_STORE_PROVIDER", value = "s3_vectors" },
+      { name = "VECTOR_BUCKET", value = "knowledge-assistant-vectors" },
+      { name = "VECTOR_INDEX", value = "knowledge" },
+      { name = "VECTOR_DIMENSION", value = "1024" },
+      { name = "VECTOR_REGION", value = "cn-north-1" }
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        "awslogs-group"         = aws_cloudwatch_log_group.ingestion_worker.name
+        "awslogs-region"        = "cn-north-1"
+        "awslogs-stream-prefix" = "ingestion-worker"
       }
     }
   }])
@@ -384,6 +618,53 @@ resource "aws_ecs_service" "model_gateway" {
     target_group_arn = aws_lb_target_group.model_gateway.arn
     container_name   = "model-gateway"
     container_port   = 8002
+  }
+  tags = var.tags
+}
+
+resource "aws_ecs_service" "agent" {
+  name            = "${local.name_prefix}-agent"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.agent.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  network_configuration {
+    subnets          = var.private_subnet_ids
+    security_groups  = [var.service_security_group_id]
+    assign_public_ip = false
+  }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.agent.arn
+    container_name   = "agent"
+    container_port   = 8003
+  }
+  tags = var.tags
+}
+
+resource "aws_ecs_service" "memory_worker" {
+  name            = "${local.name_prefix}-memory-worker"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.memory_worker.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  network_configuration {
+    subnets          = var.private_subnet_ids
+    security_groups  = [var.service_security_group_id]
+    assign_public_ip = false
+  }
+  tags = var.tags
+}
+
+resource "aws_ecs_service" "ingestion_worker" {
+  name            = "${local.name_prefix}-ingestion-worker"
+  cluster         = aws_ecs_cluster.this.id
+  task_definition = aws_ecs_task_definition.ingestion_worker.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+  network_configuration {
+    subnets          = var.private_subnet_ids
+    security_groups  = [var.service_security_group_id]
+    assign_public_ip = false
   }
   tags = var.tags
 }

@@ -21,8 +21,8 @@ resource "aws_iam_role_policy_attachment" "sagemaker" {
 }
 
 resource "aws_sagemaker_model" "llm" {
-  count = var.create_endpoints ? 1 : 0
-  name  = "${local.name_prefix}-llm"
+  count              = var.create_endpoints ? 1 : 0
+  name               = "${local.name_prefix}-llm"
   execution_role_arn = aws_iam_role.sagemaker.arn
   primary_container {
     image          = var.llm_image
@@ -53,8 +53,8 @@ resource "aws_sagemaker_endpoint" "llm" {
 }
 
 resource "aws_sagemaker_model" "embed" {
-  count = var.create_endpoints ? 1 : 0
-  name  = "${local.name_prefix}-embed"
+  count              = var.create_endpoints ? 1 : 0
+  name               = "${local.name_prefix}-embed"
   execution_role_arn = aws_iam_role.sagemaker.arn
   primary_container {
     image          = var.embed_image
